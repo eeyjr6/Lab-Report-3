@@ -1,0 +1,92 @@
+#include <opencv2/opencv.hpp>
+#include <iostream>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/highgui.hpp>
+
+using namespace std;
+using namespace cv;
+
+Scalar blueLow = Scalar(100,125,30);
+Scalar blueHigh = Scalar(133,255,220);
+Scalar redLow = Scalar(0,10,10);
+Scalar redHigh = Scalar(3,255,255);
+Scalar greenLow = Scalar(35,69,5);
+Scalar greenHigh = Scalar(70,250,250);
+
+int main()
+{
+    Mat image = imread("C:\\Users\\jaden\\Desktop\\UoN\\Project Week\\session 5\\OpenCV inc CodeBlocks\\OpenCV Task\\Images\\RedCar.bmp", 1);
+
+    Mat bg;
+    image.copyTo(bg);
+
+    cvtColor(image,image,COLOR_BGR2HSV);
+
+    // get Blue
+    Mat maskBlue;
+    inRange(image,blueLow,blueHigh,maskBlue);
+    //namedWindow("Blue Mask", CV_WINDOW_AUTOSIZE);
+    //imshow("Blue Mask", maskBlue);
+    //waitKey(0);
+
+    // get Red
+    Mat maskRed;
+    inRange(image,redLow,redHigh,maskRed);
+    //namedWindow("Red Mask", CV_WINDOW_AUTOSIZE);
+    //imshow("Red Mask", maskRed);
+    //waitKey(0);
+
+    // get Green
+    Mat maskGreen;
+    inRange(image,greenLow,greenHigh,maskGreen);
+    //namedWindow("Green Mask", CV_WINDOW_AUTOSIZE);
+    //imshow("Green Mask", maskGreen);
+    //waitKey(0);
+
+    vector < vector < Point> > contours;
+
+    findContours(maskRed,contours,RETR_EXTERNAL,CHAIN_APPROX_SIMPLE);
+    drawContours(bg,contours,-1,(0,255,0),3);
+    for (size_t i = 0; i < contours.size(); ++i){
+        Rect boundRect = boundingRect(contours[i]);
+        if (boundRect.area() > 350 && (boundRect.width < 1000 || boundRect.height < 1000));
+        rectangle(bg,boundRect.tl(),boundRect.br(),(0,0,0),3);
+    }
+
+    namedWindow("Image", CV_WINDOW_AUTOSIZE);
+    imshow("Image", bg);
+    waitKey(0);
+
+    int x1 = 0, x2 = 0, x3 = 0;
+    x1 = countNonZero(maskBlue);
+    x2 = countNonZero(maskRed);
+    x3 = countNonZero(maskGreen);
+
+    int blue = 0, red = 0, green = 0;
+    if (x1>x2)
+    {
+        blue = 1;
+        if (x1>x3){
+            cout << "Object is Blue" << endl;
+        }
+    }
+    if (x2>x3)
+    {
+        red = 1;
+        if (x2>x1){
+            cout << "Object is Red" << endl;
+        }
+    }
+    if (x3>x1)
+    {
+        green = 1;
+        if (x3>x2){
+            cout << "Object is Green" << endl;
+        }
+    }
+
+    namedWindow("Image", CV_WINDOW_AUTOSIZE);
+    imshow("Image", bg);
+    waitKey(0);
+
+}
