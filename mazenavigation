@@ -1,0 +1,305 @@
+
+// Wire Master Writer
+// by Nicholas Zambetti <http://www.zambetti.com>
+
+// Demonstrates use of the Wire library
+// Writes data to an I2C/TWI slave device
+// Refer to the "Wire Slave Receiver" example for use with this
+
+// Created 29 March 2006
+
+// This example code is in the public domain.
+
+#include <Keypad.h>
+#include <Wire.h>
+#include <iostream>
+#include <Encoder.h>
+#include <LiquidCrystal.h>
+
+#define I2C_SLAVE_ADDR 0x04
+//#define I2C_SLAVE_ADDR 0X36
+
+using namespace std;
+
+int leftMotorSpeed = 0;
+int rightMotorSpeed= 0;
+int mySteeringAngle = 90;
+
+// Encoder knobLeft(5, 6);
+// Encoder knobRight(14, 15);
+
+// long positionLeft  = -999;
+// long positionRight = -999;
+
+LiquidCrystal lcd(19, 23, 18, 17, 16, 15);
+
+const byte ROWS = 4; //four rows
+const byte COLS = 3; //three columns
+char keys[ROWS][COLS] = {
+ {'1','2','3'},
+ {'4','5','6'},
+ {'7','8','9'},
+ {'*','0','#'}
+};
+byte rowPins[ROWS] = {12, 14, 27, 26}; //connect to the row pinouts of the keypad
+byte colPins[COLS] = {25, 33, 32}; //connect to the column pinouts of the keypad
+Keypad keypad = Keypad( makeKeymap(keys), rowPins, colPins, ROWS, COLS );
+
+char mazeCourse[50] = {}; // array for the bots movements
+
+int n = 0;
+int a = 1; 
+
+int enc1_count;
+int enc2_count;
+
+void setup() {
+  Wire.begin(); // join I2C bus (address optional for master)
+  Serial.begin(9600);
+
+  //set up lcd rows and collumns
+  lcd.begin(16, 2);
+  // Print a message to the LCD.
+  lcd.print("Enter Sequence");
+
+}
+
+
+byte x = 0;
+
+void loop() {
+  char key = keypad.getKey(); //keypad input
+  Wire.requestFrom(4, 2);
+  uint8_t enc1_16_9 = Wire.read();  // receive bits 16 to 9 of encoder 1 (one byte)
+  uint8_t enc1_8_1 = Wire.read();   // receive bits 8 to 1 of encoder 1 (one byte)
+  enc1_count = (enc1_16_9 << 8) | enc1_8_1;
+
+  Wire.requestFrom(4, 2);
+  uint8_t enc2_16_9 = Wire.read();  // receive bits 16 to 9 of x (one byte)
+  uint8_t enc2_8_1 = Wire.read();   // receive bits 8 to 1 of x (one byte)
+  enc2_count = (enc2_16_9 << 8) | enc2_8_1;
+
+  //Serial.println(enc1_count);
+  //Serial.println(enc2_count);
+
+  if (key) {
+    Serial.println(key);
+    lcd.clear();
+    lcd.setCursor(0,0);
+    lcd.print("Enter sequence");
+    lcd.setCursor(0, 1);
+    lcd.print(key);
+
+    mazeCourse[n] = key; // appends the value inputted into the array
+    for (int i=0 ; i<sizeof(mazeCourse); i++)
+      Serial.println(mazeCourse[i]);
+    n = n + 1;
+    if (key == '#') { //activates the function with the array of inputs 
+      Serial.println("Activating sequence");
+      driveMaze(mazeCourse);
+      
+    }
+
+    if (key == '8'){
+      lcd.clear();
+      lcd.print("How long? 1-6");
+      mazeCourse[n] = key;
+      n = n + 1;
+      // lcd.clear();
+      // lcd.print("Enter Sequence");
+    }
+  }
+  
+ 
+}
+
+
+//Also add encoder in somehow
+//Where there is delay use the conder to go the disired distance 
+
+void driveMaze(char mazeCourse[]) {
+  Serial.println("test 1");
+  if (mazeCourse[n - 1] == '#') {
+    Serial.println("Pointer back to the start");
+    n = 0;  //sets pointer back to the start
+    Serial.println("test 2");
+    for (int j = 0; j <= sizeof(mazeCourse); j++) {
+      if (mazeCourse[n] == '8') {
+        Serial.println("8 detected");
+        lcd.clear();
+        lcd.setCursor(0, 0);
+        lcd.print("Forward");
+        n = n + 1;
+        if (mazeCourse[n] == '1'){
+          lcd.setCursor(0,1);
+          lcd.print("10 cm");
+          leftMotorSpeed = 255;
+          rightMotorSpeed = 255;
+          mySteeringAngle = 90;  // when 8 is in the array it will activate the motors
+          drive(leftMotorSpeed, rightMotorSpeed, mySteeringAngle);
+          delay(1600);
+          leftMotorSpeed = 0;
+          rightMotorSpeed = 0;
+          mySteeringAngle = 90;
+          drive(leftMotorSpeed, rightMotorSpeed, mySteeringAngle);
+          n = n + 1;
+          
+        }
+
+        else if (mazeCourse[n] == '2'){
+          lcd.setCursor(0,1);
+          lcd.print("20 cm");
+          leftMotorSpeed = 255;
+          rightMotorSpeed = 255;
+          mySteeringAngle = 90;  // when 8 is in the array it will activate the motors
+          drive(leftMotorSpeed, rightMotorSpeed, mySteeringAngle);
+          delay(3200);
+          leftMotorSpeed = 0;
+          rightMotorSpeed = 0;
+          mySteeringAngle = 90;
+          drive(leftMotorSpeed, rightMotorSpeed, mySteeringAngle);
+          n = n + 1;
+          
+        }
+
+        else if (mazeCourse[n] == '3'){
+          lcd.setCursor(0,1);
+          lcd.print("30 cm");
+          leftMotorSpeed = 255;
+          rightMotorSpeed = 255;
+          mySteeringAngle = 90;  // when 8 is in the array it will activate the motors
+          drive(leftMotorSpeed, rightMotorSpeed, mySteeringAngle);
+          delay(4800);
+          leftMotorSpeed = 0;
+          rightMotorSpeed = 0;
+          mySteeringAngle = 90;
+          drive(leftMotorSpeed, rightMotorSpeed, mySteeringAngle);
+          n = n + 1;
+          
+        }
+
+        else if (mazeCourse[n] == '4'){
+          lcd.setCursor(0,1);
+          lcd.print("40 cm");
+          leftMotorSpeed = 255;
+          rightMotorSpeed = 255;
+          mySteeringAngle = 90;  // when 8 is in the array it will activate the motors
+          drive(leftMotorSpeed, rightMotorSpeed, mySteeringAngle);
+          delay(6400);
+          leftMotorSpeed = 0;
+          rightMotorSpeed = 0;
+          mySteeringAngle = 90;
+          drive(leftMotorSpeed, rightMotorSpeed, mySteeringAngle);
+          n = n + 1;
+          
+        }
+
+        else if (mazeCourse[n] == '5'){
+          lcd.setCursor(0,1);
+          lcd.print("50 cm");
+          leftMotorSpeed = 255;
+          rightMotorSpeed = 255;
+          mySteeringAngle = 90;  // when 8 is in the array it will activate the motors
+          drive(leftMotorSpeed, rightMotorSpeed, mySteeringAngle);
+          delay(8000);
+          leftMotorSpeed = 0;
+          rightMotorSpeed = 0;
+          mySteeringAngle = 90;
+          drive(leftMotorSpeed, rightMotorSpeed, mySteeringAngle);
+          n = n + 1;
+          
+        }
+
+        else if (mazeCourse[n] == '6'){
+          lcd.setCursor(0,1);
+          lcd.print("60 cm");
+          leftMotorSpeed = 255;
+          rightMotorSpeed = 255;
+          mySteeringAngle = 90;  // when 8 is in the array it will activate the motors
+          drive(leftMotorSpeed, rightMotorSpeed, mySteeringAngle);
+          delay(9600);
+          leftMotorSpeed = 0;
+          rightMotorSpeed = 0;
+          mySteeringAngle = 90;
+          drive(leftMotorSpeed, rightMotorSpeed, mySteeringAngle);
+          n = n + 1;
+          
+        }
+        
+      } else if (mazeCourse[n] == '0') {
+        Serial.println("0 detected");
+        lcd.clear();
+        lcd.setCursor(0, 0);
+        lcd.print("Stopping");
+        leftMotorSpeed = 0;
+        rightMotorSpeed = 0;  // when 0 is detected it will stop the motors
+        drive(leftMotorSpeed, rightMotorSpeed, mySteeringAngle);
+        delay(3000);
+        n = n + 1;
+      } else if (mazeCourse[n] == '7') {
+        Serial.println("7 detected");
+        lcd.clear();
+        lcd.setCursor(0, 0);
+        lcd.print("Turning left");
+        lcd.setCursor(0, 1);
+        lcd.print("90 degrees");
+        leftMotorSpeed = 255;
+        rightMotorSpeed = 255;  // when 7 is detected it will change the angle to turn
+        mySteeringAngle = mySteeringAngle - 90;
+        drive(leftMotorSpeed, rightMotorSpeed, mySteeringAngle);
+        delay(3000);
+        leftMotorSpeed = 0;
+        rightMotorSpeed = 0;
+        drive(leftMotorSpeed, rightMotorSpeed, mySteeringAngle);
+        n = n + 1;
+      } else if (mazeCourse[n] == '9') {
+        Serial.println("9 detected");
+        lcd.clear();
+        lcd.setCursor(0, 0);
+        lcd.print("Turning right");
+        lcd.setCursor(0, 1);
+        lcd.print("90 degrees");
+        leftMotorSpeed = 255;
+        rightMotorSpeed = 255;  // when 9 is detected it wil change the angle to turn
+        mySteeringAngle = mySteeringAngle + 90;
+        drive(leftMotorSpeed, rightMotorSpeed, mySteeringAngle);
+        delay(3000);
+        leftMotorSpeed = 255;
+        rightMotorSpeed = 255;  
+        drive(leftMotorSpeed, rightMotorSpeed, mySteeringAngle);
+        n = n + 1;
+      }
+    }
+  }
+  Serial.println("test 3");
+}
+
+void drive(int leftMotor, int rightMotor, int angle) { //I2C with arduino
+  Serial.println("test 4");
+  Wire.beginTransmission(I2C_SLAVE_ADDR);
+
+  // int x = 255;
+  // int y = -255;
+  Wire.write((byte)((leftMotor & 0x0000FF00) >> 8));
+  Wire.write((byte)(leftMotor & 0x000000FF));
+
+  Wire.write((byte)((rightMotor & 0x0000FF00) >> 8));
+  Wire.write((byte)(rightMotor & 0x000000FF));
+
+
+  Wire.write((byte)((angle & 0x0000FF00) >> 8));
+  Wire.write((byte)(angle & 0x000000FF));
+
+  // Wire.write((byte)((x & 0x0000FF00) >> 8));    // first byte of x, containing bits 16 to 9
+  // Wire.write((byte)(x & 0x000000FF)); 
+
+  // Wire.write((byte)((y & 0x0000FF00) >> 8));    // first byte of y, containing bits 16 to 9
+  // Wire.write((byte)(y & 0x000000FF)); 
+
+
+  Wire.endTransmission();
+  delay(100);
+}
+
+
+
